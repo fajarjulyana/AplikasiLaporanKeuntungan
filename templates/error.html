@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Error - Revenue Analysis{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4"><i class="fas fa-exclamation-triangle me-2"></i>Error</h1>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-bug me-2"></i>Error Information</h5>
+    </div>
+    <div class="card-body">
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <p>If you are seeing a database error, here's the database structure information:</p>
+        
+        {% if tables %}
+        <h5>Database Tables</h5>
+        <ul class="list-group mb-4">
+            {% for table in tables %}
+            <li class="list-group-item">{{ table }}</li>
+            {% endfor %}
+        </ul>
+        
+        {% if table_structures %}
+        <h5>Table Structures</h5>
+        {% for table, structure in table_structures.items() %}
+        <div class="card mb-3">
+            <div class="card-header">
+                {{ table }}
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>NotNull</th>
+                                <th>Default</th>
+                                <th>PK</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for column in structure %}
+                            <tr>
+                                <td>{{ column[0] }}</td>
+                                <td>{{ column[1] }}</td>
+                                <td>{{ column[2] }}</td>
+                                <td>{{ column[3] }}</td>
+                                <td>{{ column[4] }}</td>
+                                <td>{{ column[5] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% else %}
+        <div class="alert alert-warning" role="alert">
+            No database tables information available.
+        </div>
+        {% endif %}
+        
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+            <i class="fas fa-home me-1"></i> Return to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

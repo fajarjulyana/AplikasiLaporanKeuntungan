@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Analisis Pendapatan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .date {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .summary-section {
+            margin-bottom: 30px;
+        }
+        .summary-card {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .summary-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .summary-value {
+            font-size: 18px;
+            color: #0066cc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .section-title {
+            font-size: 18px;
+            margin: 25px 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Laporan Pendapatan Fajar Mandiri Store</h1>
+        <div class="date">Periode: {{ start_date or 'Semua waktu' }} sampai {{ end_date or 'Sekarang' }}</div>
+    </div>
+
+    <div class="summary-section">
+        <div class="section-title">Ringkasan</div>
+        <div class="summary-card">
+            <div class="summary-title">Total Pendapatan</div>
+            <div class="summary-value">Rp {{ "{:,.2f}".format(summary.total_revenue) }}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-title">Total Keuntungan</div>
+            <div class="summary-value">Rp {{ "{:,.2f}".format(summary.total_profit) }}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-title">Margin Keuntungan</div>
+            <div class="summary-value">{{ "{:.2f}%".format(summary.average_profit_margin) }}</div>
+        </div>
+    </div>
+
+    <div class="section-title">Produk Terlaris</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Produk</th>
+                <th>Jumlah Terjual</th>
+                <th>Pendapatan</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in top_products %}
+            <tr>
+                <td>{{ product.nama_produk }}</td>
+                <td>{{ product.total_quantity }}</td>
+                <td>Rp {{ "{:,.2f}".format(product.total_revenue) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="section-title">Transaksi Terbaru</div>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tanggal</th>
+                <th>Pendapatan</th>
+                <th>Keuntungan</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions[:10] %}
+            {% set profit_info = profit_dict.get(transaction.id, {}) %}
+            <tr>
+                <td>{{ transaction.id }}</td>
+                <td>{{ transaction.tanggal }}</td>
+                <td>Rp {{ "{:,.2f}".format(transaction.total) }}</td>
+                <td>Rp {{ "{:,.2f}".format(profit_info.profit|float if profit_info and profit_info.profit is not none else 0) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if category_revenue %}
+    <div class="section-title">Pendapatan per Kategori</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Kategori</th>
+                <th>Pendapatan</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in category_revenue %}
+            <tr>
+                <td>{{ category.kategori }}</td>
+                <td>Rp {{ "{:,.2f}".format(category.category_revenue) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <div class="footer">
+        <p>Laporan ini dibuat secara otomatis pada {{ now.strftime('%d %B %Y, %H:%M') }}</p>
+        <p>Dashboard Analisis Pendapatan &copy; 2023</p>
+    </div>
+</body>
+</html>

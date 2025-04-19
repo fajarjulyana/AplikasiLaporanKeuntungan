@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Analisis Pendapatan{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4"><i class="fas fa-tachometer-alt me-2"></i>Dashboard Pendapatan</h1>
+    </div>
+</div>
+
+<!-- Summary stats cards -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card border-left-primary h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Pendapatan</div>
+                        <div class="h4 mb-0 font-weight-bold">Rp {{ "{:,.2f}".format(summary.total_revenue) }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card border-left-success h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Keuntungan</div>
+                        <div class="h4 mb-0 font-weight-bold">Rp {{ "{:,.2f}".format(summary.total_profit) }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card border-left-info h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Margin Keuntungan</div>
+                        <div class="h4 mb-0 font-weight-bold">{{ "{:.2f}%".format(summary.average_profit_margin) }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-area me-2"></i>Tren Pendapatan</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" width="100%" height="40"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Informasi Stok Barang</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="stockChart" width="100%" height="40"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Produk Terlaris</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Produk</th>
+                                <th>Jumlah Terjual</th>
+                                <th>Pendapatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_products %}
+                            <tr>
+                                <td>{{ product.nama_produk }}</td>
+                                <td>{{ product.total_quantity }}</td>
+                                <td>Rp {{ "{:,.2f}".format(product.total_revenue) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Daftar Stok Barang</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nama Produk</th>
+                                <th>Jumlah Stok</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in product_stock %}
+                            <tr>
+                                <td>{{ item.id }}</td>
+                                <td>{{ item.nama_produk }}</td>
+                                <td class="{% if item.jumlah < 10 %}text-danger{% elif item.jumlah < 30 %}text-warning{% else %}text-success{% endif %}">
+                                    {{ item.jumlah }}
+                                    {% if item.jumlah < 10 %}
+                                    <span class="badge bg-danger">Stok Rendah</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+    // Revenue chart data
+    const revenueChartLabels = {{ chart_labels|tojson }};
+    const revenueChartData = {{ chart_data|tojson }};
+    
+    // Category chart data
+    const categoryChartLabels = {{ category_labels|tojson }};
+    const categoryChartData = {{ category_data|tojson }};
+
+    // Initialize charts when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create revenue chart
+        createLineChart('revenueChart', revenueChartLabels, revenueChartData, 'Pendapatan Harian');
+        
+        // Create stock pie chart
+        createPieChart('stockChart', categoryChartLabels, categoryChartData);
+    });
+</script>
+{% endblock %}

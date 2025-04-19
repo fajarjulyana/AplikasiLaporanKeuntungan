@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Analitik - Analisis Pendapatan{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4"><i class="fas fa-chart-pie me-2"></i>Analitik Lanjutan</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Tren Pendapatan Bulanan</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyRevenueChart" width="100%" height="40"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-percentage me-2"></i>Tingkat Pertumbuhan Bulanan</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Bulan</th>
+                                <th>Tingkat Pertumbuhan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for month, rate in growth_rates %}
+                            <tr>
+                                <td>{{ month }}</td>
+                                <td class="{% if rate > 0 %}text-success{% elif rate < 0 %}text-danger{% else %}text-secondary{% endif %}">
+                                    {% if rate > 0 %}+{% endif %}{{ rate }}%
+                                    {% if rate > 0 %}
+                                    <i class="fas fa-arrow-up text-success"></i>
+                                    {% elif rate < 0 %}
+                                    <i class="fas fa-arrow-down text-danger"></i>
+                                    {% else %}
+                                    <i class="fas fa-minus text-secondary"></i>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Pendapatan per Kategori</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryRevenueChart" width="100%" height="40"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Performa Produk</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Produk</th>
+                                <th>Jumlah Terjual</th>
+                                <th>Pendapatan</th>
+                                <th>Performa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in product_sales %}
+                            <tr>
+                                <td>{{ product.nama_produk }}</td>
+                                <td>{{ product.total_quantity }}</td>
+                                <td>Rp {{ "{:,.2f}".format(product.total_revenue) }}</td>
+                                <td>
+                                    {% set performance = (product.total_revenue / product_sales[0].total_revenue * 100)|float if product_sales and product_sales|length > 0 and product_sales[0].total_revenue > 0 else 0 %}
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-info" 
+                                             role="progressbar" 
+                                             style="width: {{ performance }}%;" 
+                                             aria-valuenow="{{ performance }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ "{:.2f}%".format(performance) }}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+    // Monthly revenue chart data
+    const monthlyLabels = {{ monthly_labels|tojson }};
+    const monthlyData = {{ monthly_data|tojson }};
+    
+    // Category revenue chart data
+    const categoryLabels = [];
+    const categoryData = [];
+    
+    {% for category in category_revenue %}
+    categoryLabels.push("{{ category.kategori }}");
+    categoryData.push({{ category.category_revenue }});
+    {% endfor %}
+
+    // Initialize charts when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create monthly revenue chart
+        createLineChart('monthlyRevenueChart', monthlyLabels, monthlyData, 'Pendapatan Bulanan', true);
+        
+        // Create category revenue chart
+        createDoughnutChart('categoryRevenueChart', categoryLabels, categoryData);
+    });
+</script>
+{% endblock %}

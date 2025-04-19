@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Transaksi - Analisis Pendapatan{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4"><i class="fas fa-receipt me-2"></i>Analisis Transaksi</h1>
+    </div>
+</div>
+
+<!-- Transactions table -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-table me-2"></i>Data Transaksi</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Tanggal</th>
+                        <th>Pendapatan</th>
+                        <th>Biaya</th>
+                        <th>Keuntungan</th>
+                        <th>Margin</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    {% set profit_info = profit_dict.get(transaction.id, {}) %}
+                    <tr>
+                        <td>{{ transaction.id }}</td>
+                        <td>{{ transaction.tanggal }}</td>
+                        <td>Rp {{ "{:,.2f}".format(transaction.total) }}</td>
+                        <td>Rp {{ "{:,.2f}".format(profit_info.cost|float) if profit_info else "0.00" }}</td>
+                        <td class="{% if profit_info and profit_info.profit is not none and profit_info.profit > 0 %}text-success{% else %}text-danger{% endif %}">
+                            Rp {{ "{:,.2f}".format(profit_info.profit|float if profit_info and profit_info.profit is not none else 0) }}
+                        </td>
+                        <td>
+                            {% if profit_info %}
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar {% if profit_info.profit_margin is not none and profit_info.profit_margin > 30 %}bg-success{% elif profit_info.profit_margin is not none and profit_info.profit_margin > 15 %}bg-info{% elif profit_info.profit_margin is not none and profit_info.profit_margin > 0 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ profit_info.profit_margin if profit_info.profit_margin is not none and profit_info.profit_margin > 0 else 0 }}%;" 
+                                         aria-valuenow="{{ profit_info.profit_margin if profit_info.profit_margin is not none else 0 }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        {{ "{:.2f}%".format(profit_info.profit_margin if profit_info.profit_margin is not none else 0) }}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="progress" style="height:
+                                20px;">
+                                    <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                        0.00%
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Analisis Transaksi</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="transactionProfitChart" width="100%" height="40"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+    // Prepare data for the transaction profit chart
+    const transactionDates = [];
+    const transactionRevenues = [];
+    const transactionProfits = [];
+    
+    {% for transaction in transactions %}
+    {% set profit_info = profit_dict.get(transaction.id, {}) %}
+    transactionDates.push("{{ transaction.tanggal }}");
+    transactionRevenues.push({{ transaction.total }});
+    transactionProfits.push({{ profit_info.profit|float if profit_info and profit_info.profit is not none else 0 }});
+    {% endfor %}
+    
+    // Initialize charts when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create transaction profit comparison chart
+        createBarChart('transactionProfitChart', transactionDates.slice(0, 15), 
+                       [
+                           {
+                               label: 'Pendapatan',
+                               data: transactionRevenues.slice(0, 15),
+                               backgroundColor: 'rgba(78, 115, 223, 0.5)',
+                               borderColor: 'rgba(78, 115, 223, 1)',
+                           },
+                           {
+                               label: 'Keuntungan',
+                               data: transactionProfits.slice(0, 15),
+                               backgroundColor: 'rgba(28, 200, 138, 0.5)',
+                               borderColor: 'rgba(28, 200, 138, 1)',
+                           }
+                       ]);
+    });
+</script>
+{% endblock %}
